@@ -112,7 +112,6 @@ class ChatProvider extends ChangeNotifier {
           "\n\nCRITICAL USER FACTS TO REMEMBER:\n$formattedFacts";
     }
 
-    // 1. Initialize Groq History (Text Only)
     final List<Map<String, dynamic>> groqHistory = messages.map((msg) {
       return {'role': msg.isUser ? 'user' : 'assistant', 'content': msg.text};
     }).toList();
@@ -122,7 +121,6 @@ class ChatProvider extends ChangeNotifier {
       history: groqHistory,
     );
 
-    // 2. Initialize Gemini History
     final List<Content> geminiHistory = messages.map((msg) {
       if (msg.isUser) {
         final List<Part> parts = [TextPart(msg.text)];
@@ -162,7 +160,6 @@ class ChatProvider extends ChangeNotifier {
         }
       }
     } else {
-      // MIGRATION: Check if old 'messages' exists
       final dynamic oldMessages = _chatBox.get('messages');
       if (oldMessages != null) {
         final List<dynamic> decoded = jsonDecode(oldMessages.toString());
@@ -179,9 +176,8 @@ class ChatProvider extends ChangeNotifier {
         _threads = [newThread];
         _currentThreadId = newThread.id;
         _saveThreads();
-        _chatBox.delete('messages'); // Cleanup
+        _chatBox.delete('messages');
       } else {
-        // Start fresh with one thread
         _createNewThread();
       }
     }
@@ -250,11 +246,9 @@ class ChatProvider extends ChangeNotifier {
     final prompt =
         "Generate a very short (2-3 words) title for a chat that starts with this message: \"$firstPrompt\". Return ONLY the title text, nothing else.";
 
-    // We use Groq directly for speed as it's a background task
     final title = await _groqService.sendMessage(prompt);
 
     if (title != null && title.isNotEmpty && !title.contains("⚠️")) {
-      // Clean up quotes if AI added them
       final cleanTitle = title.replaceAll('"', '').replaceAll("'", "").trim();
       renameThread(threadId, cleanTitle);
     }
@@ -293,7 +287,6 @@ class ChatProvider extends ChangeNotifier {
 
     messages.add(userMessage);
 
-    // Auto-name if first message
     if (messages.length == 1 && currentThread?.title == "New Chat") {
       _generateTitle(text);
     }
@@ -304,27 +297,21 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
     await _saveMessages();
 
-    // Hybrid Router: Route to Gemini if images exist, Groq otherwise (with fallback)
     dynamic aiResponse;
     if (currentImages != null) {
-      // Vision route stays on Gemini
       aiResponse = await _geminiService.sendMessage(
         finalPrompt,
         base64Images: currentImages,
       );
-      // Sync Groq history for the user part anyway
       _groqService.addLocalMessage(finalPrompt, 'user');
     } else {
-      // Text route: Groq primary, Gemini fallback
       aiResponse = await _groqService.sendMessage(finalPrompt);
 
-      // Handle Tool Calls for Groq
       aiResponse = await _processToolCallsIfNeeded(aiResponse, isGroq: true);
 
       if (aiResponse == null || aiResponse == '__RATE_LIMIT_ERROR__') {
         final fallback = await _geminiService.sendMessage(finalPrompt);
 
-        // Handle Tool Calls for Gemini
         aiResponse = await _processToolCallsIfNeeded(fallback, isGroq: false);
       }
     }
@@ -339,7 +326,6 @@ class ChatProvider extends ChangeNotifier {
       finalResultText = "⚠️ Max encountered an error processing tools.";
     }
 
-    // Handle special error cases
     if (finalResultText == '__RATE_LIMIT_ERROR__') {
       finalResultText =
           "⚠️ Whoa, slow down! My circuits are heating up. Give me a minute to breathe and then we can keep going! 🤖";
@@ -362,13 +348,11 @@ class ChatProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    // Background RAG Fact Extraction
     FactExtractor.extractFacts(text).then((newFacts) async {
       if (newFacts.isNotEmpty) {
         await _memoryService.saveFacts(newFacts);
         _initializeServices(
-          isVoiceMode: isVoiceMode,
-        ); // Maintain voice mode if needed
+        );
       }
     });
   }
@@ -436,14 +420,10 @@ class ChatProvider extends ChangeNotifier {
   }) async {
     dynamic currentResponse = initialResponse;
 
-    // Limit to 5 tool iterations to prevent infinite loops
     for (int i = 0; i < 5; i++) {
       if (currentResponse == null) return null;
 
-      // 1. Fallback Parser for String Hallucinations
       if (currentResponse is String) {
-        // --- Pattern A: Tag-Merge bug: <function=tool_name{"arg":"val"}> ---
-        // This is the primary Llama-3 failure mode on Groq.
         final mergeMatch = RegExp(
           r'<function=([\w_]+)\{([^}]*)\}>',
           caseSensitive: false,
@@ -464,7 +444,6 @@ class ChatProvider extends ChangeNotifier {
           _setToolState(toolName);
           final resultText = await _executeTool(toolName, safeArgs);
           if (isGroq) {
-            // We can't do a proper tool-call ID cycle here, so inject as user context
             _groqService.addLocalMessage(
               '[Tool Result for $toolName]: $resultText',
               'user',
@@ -476,7 +455,6 @@ class ChatProvider extends ChangeNotifier {
           continue;
         }
 
-        // --- Pattern B: Dot-format: <function.tool_name.param>value</function> ---
         final dotMatch = RegExp(
           r'<[\/]?function\.([\w_]+)\.([\w_]+)>([^<]+)<\/function>',
           caseSensitive: false,
@@ -505,8 +483,6 @@ class ChatProvider extends ChangeNotifier {
           continue;
         }
 
-        // --- Pattern C: Func-format: <function(tool_name.param="value")></function> ---
-        // Catches: <function(web_search.query="latest ...")></function>
         final funcMatch = RegExp(
           r'<function\(([\w_]+)\.([\w_]+)=([^)]+)\)>',
           caseSensitive: false,
@@ -515,7 +491,6 @@ class ChatProvider extends ChangeNotifier {
           final toolName = funcMatch.group(1)!;
           final paramName = funcMatch.group(2)!;
           String paramValue = funcMatch.group(3)!;
-          // Clean quotes
           paramValue = paramValue
               .replaceAll('"', '')
               .replaceAll("'", "")
@@ -539,17 +514,15 @@ class ChatProvider extends ChangeNotifier {
           continue;
         }
 
-        return currentResponse; // Normal text response
+        return currentResponse;
       }
 
-      // 2. Handle Gemini Function Calls
       if (!isGroq && currentResponse is GenerateContentResponse) {
         final functionCalls = currentResponse.functionCalls.toList();
         if (functionCalls.isEmpty) return currentResponse.text;
 
         final List<FunctionResponse> responses = [];
 
-        // Execute all Gemini tools in parallel
         await Future.wait(
           functionCalls.map((call) async {
             _setToolState(call.name);
@@ -562,16 +535,13 @@ class ChatProvider extends ChangeNotifier {
         );
 
         currentResponse = await _geminiService.submitFunctionResults(responses);
-      }
-      // 3. Handle Groq Tool Calls
-      else if (isGroq && currentResponse is Map<String, dynamic>) {
+      } else if (isGroq && currentResponse is Map<String, dynamic>) {
         final toolCalls = currentResponse['tool_calls'] as List?;
         if (toolCalls == null || toolCalls.isEmpty)
           return currentResponse['content'];
 
         final List<Map<String, dynamic>> results = [];
 
-        // Process all tools Groq requested
         await Future.wait(
           toolCalls.map((call) async {
             final name = call['function']['name'];

@@ -117,10 +117,9 @@ class GroqService {
         final data = response.data;
         final message = data['choices'][0]['message'];
         
-        // Sanitize message: Groq is strict about formats
         final Map<String, dynamic> sanitizedMessage = {
           'role': 'assistant',
-          'content': message['content'], // Keep as null if it is null
+          'content': message['content'],
         };
         
         if (message['tool_calls'] != null) {
@@ -144,7 +143,6 @@ class GroqService {
           return '__RATE_LIMIT_ERROR__';
         }
         if (e.response?.statusCode == 400) {
-          // Log the full response to see the EXACT Groq error message
           final errorBody = e.response?.data;
           final errorMsg = (errorBody is Map) 
               ? (errorBody['error']?['message'] ?? errorBody.toString())
@@ -162,12 +160,11 @@ class GroqService {
       _messages.add({
         "role": "tool",
         "tool_call_id": res['id'],
-        "name": res['name'], // Crucial for Groq/Llama
+        "name": res['name'],
         "content": res['result'],
       });
     }
     
-    // Call Groq again to get the final response based on all tool results
     return sendMessage(""); 
   }
 }

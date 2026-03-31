@@ -51,7 +51,7 @@ class VoiceService extends ChangeNotifier {
   }
 
   Future<void> speak(String text) async {
-    await _applyVoiceSettings(); // Ensure consistent voice across modes
+    await _applyVoiceSettings();
     _setState(VoiceState.speaking);
     await _flutterTts.speak(text);
   }
@@ -59,7 +59,7 @@ class VoiceService extends ChangeNotifier {
   Future<void> stop() async {
     await _flutterTts.stop();
     _setState(VoiceState.idle);
-    onSpeakDone?.call(); // Manually trigger loop resumption after interruption
+    onSpeakDone?.call();
   }
 
   Future<bool> startListening(Function(String) onResult, {int pauseForSeconds = 5}) async {

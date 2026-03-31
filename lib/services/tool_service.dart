@@ -49,7 +49,6 @@ class ToolService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        // Tavily often provides a direct 'answer' field which is great for LLMs
         final String? directAnswer = data['answer'];
         final List<dynamic> results = data['results'] ?? [];
 

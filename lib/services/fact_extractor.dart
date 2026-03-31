@@ -8,12 +8,10 @@ class FactExtractor {
   static const String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
   static Future<List<String>> extractFacts(String message) async {
-    // Only run extraction if message contains trigger words
     final triggerWords = ["i", "my", "i am", "i'm", "mine", "remember", "prefer", "like", "love", "hate"];
     final lowerMessage = message.toLowerCase();
     
     bool containsTrigger = false;
-    // Check for exact word matches to avoid partial matches (e.g. 'i' in 'it')
     for (final word in triggerWords) {
       if (RegExp(r'\b' + word + r'\b').hasMatch(lowerMessage)) {
         containsTrigger = true;
@@ -36,7 +34,7 @@ class FactExtractor {
           },
         ),
         data: {
-          'model': 'llama-3.1-8b-instant', // Use a fast/cheap model for background tasks
+          'model': 'llama-3.1-8b-instant',
           'messages': [
             {
               'role': 'system',
@@ -56,7 +54,6 @@ class FactExtractor {
         final String aiResponse = data['choices'][0]['message']['content'];
         
         try {
-          // Remove potential json markdown wrappers just in case
           String cleanJson = aiResponse.replaceAll('```json', '').replaceAll('```', '').trim();
           final List<dynamic> parsed = jsonDecode(cleanJson);
           return parsed.cast<String>();

@@ -59,7 +59,7 @@ class GeminiService {
     _chatSession = _model.startChat();
   }
 
-  // Sync historical messages for the vision request context
+  /// Syncs historical messages for the vision request context.
   void setHistory(List<Content> history) {
     _chatSession = _model.startChat(history: history);
   }
@@ -77,10 +77,9 @@ class GeminiService {
 
       final response = await _chatSession.sendMessage(Content.multi(parts));
       
-      // Check for function calls
       final functionCalls = response.functionCalls.toList();
       if (functionCalls.isNotEmpty) {
-        return response; // Return the full response for ChatProvider to process
+        return response;
       }
 
       return response.text;
@@ -99,7 +98,6 @@ class GeminiService {
       Content.functionResponses(results),
     );
     
-    // The response after a function result might be another function call or the final text
     final functionCalls = response.functionCalls.toList();
     if (functionCalls.isNotEmpty) {
       return response;

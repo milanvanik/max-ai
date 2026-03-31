@@ -27,7 +27,7 @@ class _VoiceModeBottomSheetState extends State<VoiceModeBottomSheet> {
   }
 
   void _onLongPressStart() {
-    _voiceService.stop(); // Stop any current speaking
+    _voiceService.stop();
     _currentRecognizedWords = '';
     _voiceService.startListening((text) {
       if (mounted) {
@@ -35,7 +35,7 @@ class _VoiceModeBottomSheetState extends State<VoiceModeBottomSheet> {
           _currentRecognizedWords = text;
         });
       }
-    }, pauseForSeconds: 10); // Don't cut off mid-hold
+    }, pauseForSeconds: 10);
   }
 
   void _onLongPressEnd() {
@@ -116,7 +116,7 @@ class _VoiceModeBottomSheetState extends State<VoiceModeBottomSheet> {
               ),
             ),
           ),
-          // LARGE PTT BUTTON AREA
+
           GestureDetector(
             onLongPressStart: (_) => _onLongPressStart(),
             onLongPressEnd: (_) => _onLongPressEnd(),
