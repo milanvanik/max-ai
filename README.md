@@ -16,27 +16,25 @@
 
 ## 🤖 About Max
 
-Max isn't just another ChatGPT wrapper. He is an **Agentic Assistant** designed to help you interact with the real world, heavily leaning towards becoming a powerful **study and productivity companion**. 
-
-Max comes with a distinct personality (think Harvey Specter meets Mike Ross) and uses a custom-built Hybrid Router to seamlessly switch between Groq (Llama-3) for lightning-fast reasoning and Google Gemini for sophisticated multi-modal fallbacks. He doesn't just talk; he *acts* by using tools.
+Max is a powerful, agentic AI assistant designed to help you interact with the real world seamlessly. He comes with a distinct, confident personality and uses a custom-built Hybrid Router to intelligently switch between high-speed reasoning models and sophisticated multi-modal engines. He goes beyond standard text generation by actively using tools to pull real-time data and perform complex tasks on your behalf.
 
 ## ✨ Core Features
 
-- **🧠 Hybrid AI Engine**: Intelligently routes text queries to Groq's high-speed Llama models and vision/fallback queries to Google Gemini.
-- **🦾 Agentic Tools**: Max has "hands". He can pause his thinking to pull real-world data:
+- **🧠 Hybrid AI Engine**: Intelligently routes text queries to high-speed Llama models via Groq and logic/vision queries to Google Gemini.
+- **🦾 Agentic Tools**: Max can execute live tools to synthesize factual, up-to-date data:
   - 🔍 **Live Web Search** (via Tavily)
   - 🌤️ **Live Weather** (via OpenWeatherMap)
   - 🕰️ **System Time & Date Awareness**
 - **🎙️ Push-to-Talk Voice Mode**: A specialized, hold-to-speak interface where Max responds with short, natural, conversational audio instead of giant walls of text.
 - **📚 Multi-Threaded Memory**: Local persistence using Hive. Max auto-names your conversation threads based on context, allowing you to jump back into past sessions instantly.
 
-## 🚀 Future Roadmap (Study Focus)
+## 🚀 Future Roadmap (Focus: Next-Gen Study & Productivity)
 
-Max is evolving from a raw assistant into a dedicated **Study Buddy**. Upcoming features include:
+Max is rapidly evolving into a dedicated, high-performance study and productivity companion:
 
-- [ ] **Flashcards & UI Widgets**: Dynamic, AI-generated study cards rendered natively in Flutter.
-- [ ] **NotebookLM-Style Document Analysis**: Upload PDFs or textbooks and have Max synthesize the material, test your knowledge, and act as a personalized tutor.
-- [ ] **Premium UI Overhaul**: Glassmorphism, tailored animations, and a world-class aesthetic finish.
+- [ ] **Smart Flashcards**: Dynamic, AI-generated study cards and interactive widgets rendered natively in Flutter.
+- [ ] **Advanced Document Synthesis**: Upload PDFs, textbooks, or notes and have Max map the material, test your knowledge, and act as a personalized, context-aware tutor.
+- [ ] **Premium UI Overhaul**: Implementation of modern design aesthetics, tailored animations, and a world-class visual finish.
 
 ## 🛠️ Setup & Environmental Variables
 
