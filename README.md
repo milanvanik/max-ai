@@ -1,57 +1,83 @@
-<br />
-<div align="center">
-  <h1 align="center">Max AI Buddy ⚡</h1>
+# Max AI ⚡
 
+<div align="center">
   <p align="center">
-    A highly intelligent, snappy, and agentic AI companion built with Flutter.
+    <strong>An elite, agentic AI companion with a sharp personality and 3D visual intelligence.</strong>
     <br />
-    <br />
-    <a href="#features">Features</a>
-    ·
-    <a href="#roadmap">Roadmap</a>
-    ·
-    <a href="#setup">Setup</a>
+    Cloud Silver & Moonstone Edition
   </p>
 </div>
 
-## 🤖 About Max
+---
 
-Max is a powerful, agentic AI assistant designed to help you interact with the real world seamlessly. He comes with a distinct, confident personality and uses a custom-built Hybrid Router to intelligently switch between high-speed reasoning models and sophisticated multi-modal engines. He goes beyond standard text generation by actively using tools to pull real-time data and perform complex tasks on your behalf.
+## 🎭 The Persona
+Max isn't just a chatbot; he's a presence. Built with a **distinct and sharp personality**, he is confident, witty, and deeply loyal. He doesn't just answer questions—he delivers factual insights wrapped in clever dialogue and high-end swagger.
 
-## ✨ Core Features
+- **Tone**: Professional, razor-sharp, and uniquely charming.
+- **Loyalty**: Your goals are his priority. He uses his "AI-genius" to win your arguments and solve your problems.
+- **Engagement**: Uses pop-culture, gaming, and anime references to keep conversations alive.
 
-- **🧠 Hybrid AI Engine**: Intelligently routes text queries to high-speed Llama models via Groq and logic/vision queries to Google Gemini.
-- **🦾 Agentic Tools**: Max can execute live tools to synthesize factual, up-to-date data:
-  - 🔍 **Live Web Search** (via Tavily)
-  - 🌤️ **Live Weather** (via OpenWeatherMap)
-  - 🕰️ **System Time & Date Awareness**
-- **🎙️ Push-to-Talk Voice Mode**: A specialized, hold-to-speak interface where Max responds with short, natural, conversational audio instead of giant walls of text.
-- **📚 Multi-Threaded Memory**: Local persistence using Hive. Max auto-names your conversation threads based on context, allowing you to jump back into past sessions instantly.
+---
 
-## 🚀 Future Roadmap (Focus: Next-Gen Study & Productivity)
+## 🧠 Core Intelligence: The Hybrid Router
+Max uses a custom **Dual-Model Architecture** to ensure peak performance:
+- **Groq (Llama-3.3-70B)**: Powers Max's rapid-fire reasoning and deep conversational wit.
+- **Google Gemini 2.0 Flash**: Handles complex multi-modal vision and high-context logic.
+- **Agentic Tooling**: Max is fully autonomous, utilizing real-time tools for:
+  - 🌐 **Web Intelligence** (via Tavily)
+  - 🌤️ **Atmospheric Data** (via OpenWeatherMap)
+  - 🕰️ **Temporal Awareness** (System Time & Date)
 
-Max is rapidly evolving into a dedicated, high-performance study and productivity companion:
+---
 
-- [ ] **Smart Flashcards**: Dynamic, AI-generated study cards and interactive widgets rendered natively in Flutter.
-- [ ] **Advanced Document Synthesis**: Upload PDFs, textbooks, or notes and have Max map the material, test your knowledge, and act as a personalized, context-aware tutor.
-- [ ] **Premium UI Overhaul**: Implementation of modern design aesthetics, tailored animations, and a world-class visual finish.
+## 🌌 Immersive UI & Visual Core
+Designed with a **Cloud Silver & Moonstone** aesthetic, Max feels like a premium piece of hardware.
 
-## 🛠️ Setup & Environmental Variables
+### ⚛️ The Neural Core
+At the center of the interface sits the **Neural Core**—a high-performance 3D dodecahedron rendered with Flutter's custom shaders. It reacts in real-time to Max's states:
+- **Idle**: Gentle lunar pulse.
+- **Listening**: Concentric energy waves.
+- **Thinking**: Rapid crystalline rotation.
+- **Speaking**: Dynamic vocal-responsive expansion.
 
-To run Max locally, you will need to create a `.env` file in the root directory with the following API keys:
+### 💎 Glassmorphism
+The interface uses modern **BackdropBlur** and semi-transparent layers to create a depth-heavy, high-speed UI that feels modern and state-of-the-art.
 
+---
+
+## 🔒 The Persona Vault (Advanced Memory)
+Max features a **Context-Aware Memory System** that builds a persistent user profile across threads.
+- **Contextual Merging**: Uses Llama-70B to understand context (e.g., catching a car name as a favorite car even in one-word answers).
+- **Identity Synthesis**: Automatically merges and de-duplicates information to maintain a clean "User Persona."
+- **Transparency**: Interfacing with the **Persona Vault** in the drawer allows you to view and manage exactly what Max knows about you.
+
+---
+
+## 🛠️ Technical Setup
+
+### ⚙️ Environmental Variables
+Create a `.env` file in the root directory:
 ```env
-GEMINI_API_KEY=your_gemini_key
-GROQ_API_KEY=your_groq_key
-TAVILY_API_KEY=your_tavily_key
+GEMINI_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
+TAVILY_API_KEY=your_key_here
 OPENWEATHER_API_KEY=your_openweather_key
 ```
 
-### Build Requirements
-- Flutter SDK (latest stable)
-- Dart SDK
-- Android Studio / Xcode
+### 📦 Prerequisites
+- **Flutter**: Latest stable channel.
+- **Fonts**: *Outfit* and *Inter* (Google Fonts enabled).
 
-## 🤝 Contributing
+---
 
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+## 🎯 Our Vision
+Max is evolving into a high-performance study and research companion. Future updates include:
+- **Smart Cards**: AI-generated interactive study widgets.
+- **Document Mapping**: Contextual PDF and research paper synthesis.
+- **Neural Audio**: Ultra-low latency, personality-accurate voice responses.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ and Swagger by Max AI.</sub>
+</div>

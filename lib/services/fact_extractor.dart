@@ -7,21 +7,16 @@ class FactExtractor {
   static final Dio _dio = Dio();
   static const String _baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
-  static Future<List<String>> extractFacts(String message) async {
-    final triggerWords = ["i", "my", "i am", "i'm", "mine", "remember", "prefer", "like", "love", "hate"];
-    final lowerMessage = message.toLowerCase();
-    
-    bool containsTrigger = false;
-    for (final word in triggerWords) {
-      if (RegExp(r'\b' + word + r'\b').hasMatch(lowerMessage)) {
-        containsTrigger = true;
-        break;
-      }
-    }
+  /// Extracts permanent biographical facts from a conversation window.
+  /// [history] should be a list of recent messages in [{role, content}] format.
+  static Future<List<String>> extractFacts(List<Map<String, String>> history) async {
+    if (history.isEmpty) return [];
 
-    if (!containsTrigger || message.length < 5) {
-      return [];
-    }
+    final String conversationText = history
+        .map((m) => '${m['role'] == 'user' ? 'User' : 'Max'}: ${m['content']}')
+        .join('\n');
+
+    if (conversationText.trim().length < 5) return [];
 
     try {
       final response = await _dio.post(
@@ -34,15 +29,24 @@ class FactExtractor {
           },
         ),
         data: {
-          'model': 'llama-3.1-8b-instant',
+          'model': Constants.groqModel,
           'messages': [
             {
               'role': 'system',
-              'content': 'You are a fact extraction engine. Extract strictly personal, permanent, or important facts about the user from the following message. Convert pronouns to third person (e.g., "I like apples" -> "User likes apples"). Return ONLY a raw JSON array of strings representing the facts, e.g., ["User likes apples", "User lives in New York"]. If no clear personal facts are found, return exactly []. Do not include markdown formatting or markdown code blocks like ```json.'
+              'content': '''You are a strict biographical fact extraction engine.
+
+RULES (follow exactly):
+1. Extract ONLY permanent facts the user explicitly stated: Name, Age, Profession, Location, Preferences, Family, Goals.
+2. Literal-only: extract ONLY what was clearly and directly stated. Do NOT infer, assume, or interpret beyond the exact words.
+3. Type-validation gate: if the value does not match the category (e.g. a car brand given as a color, a color given as a car model), discard that field entirely — return nothing for it.
+4. If a fact is nonsensical or semantically incoherent, return []. Silence is always better than a wrong or guessed fact.
+5. Do NOT extract transient requests (e.g. "User wants coffee", "User is asking about weather").
+6. Convert to 3rd person: "I love chess" → "User loves chess".
+7. Return ONLY a raw JSON array of strings, e.g. ["User is a pilot", "User loves chess"]. Return [] if nothing qualifies. No markdown, no explanation.'''
             },
             {
               'role': 'user',
-              'content': message,
+              'content': conversationText,
             }
           ],
           'temperature': 0.0,
@@ -50,23 +54,20 @@ class FactExtractor {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        final String aiResponse = data['choices'][0]['message']['content'];
-        
+        final String aiResponse = response.data['choices'][0]['message']['content'];
         try {
-          String cleanJson = aiResponse.replaceAll('```json', '').replaceAll('```', '').trim();
-          final List<dynamic> parsed = jsonDecode(cleanJson);
+          final String clean = aiResponse.replaceAll('```json', '').replaceAll('```', '').trim();
+          final List<dynamic> parsed = jsonDecode(clean);
           return parsed.cast<String>();
         } catch (e) {
-          debugPrint('FactExtractor JSON Parsing Error: $e');
-          debugPrint('Raw response was: $aiResponse');
+          debugPrint('FactExtractor JSON Parse Error: $e | Raw: $aiResponse');
           return [];
         }
       }
     } catch (e) {
       debugPrint('FactExtractor API Exception: $e');
     }
-    
+
     return [];
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../services/voice_service.dart';
+import '../../utils/theme.dart';
+import 'neural_core.dart';
 
 class VoiceModeBottomSheet extends StatefulWidget {
   const VoiceModeBottomSheet({super.key});
@@ -61,15 +63,15 @@ class _VoiceModeBottomSheetState extends State<VoiceModeBottomSheet> {
     final state = voiceService.state;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.55,
+      height: MediaQuery.of(context).size.height * 0.85, // Even taller for immersive feel
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: MaxTheme.background,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            spreadRadius: 5,
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 30,
+            spreadRadius: 10,
           )
         ],
       ),
@@ -126,51 +128,52 @@ class _VoiceModeBottomSheetState extends State<VoiceModeBottomSheet> {
               }
             },
             child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(24),
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  colors: state == VoiceState.listening
-                      ? [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.tertiary]
-                      : [Theme.of(context).colorScheme.surfaceContainerHighest, Theme.of(context).colorScheme.surfaceContainer],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.all(24),
+              decoration: MaxTheme.glassDecoration.copyWith(
+                borderRadius: BorderRadius.circular(40),
+                border: Border.all(
+                  color: state == VoiceState.listening ? MaxTheme.accent.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
+                  width: 1.5,
                 ),
                 boxShadow: state == VoiceState.listening
                     ? [
                         BoxShadow(
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+                          color: MaxTheme.accent.withValues(alpha: 0.2),
+                          blurRadius: 30,
+                          spreadRadius: 5,
                         )
                       ]
-                    : null,
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    state == VoiceState.listening
-                        ? Icons.mic
+                  MaxNeuralCore(
+                    state: state == VoiceState.listening
+                        ? CoreState.listening
                         : state == VoiceState.speaking
-                            ? Icons.graphic_eq
-                            : Icons.mic_none,
-                    size: 64,
-                    color: state == VoiceState.listening
-                        ? Theme.of(context).colorScheme.onPrimary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                            ? CoreState.speaking
+                            : CoreState.idle,
+                    size: 140,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
                   Text(
                     state == VoiceState.listening ? 'RECORDING' : 'HOLD TO TALK',
                     style: TextStyle(
+                      fontFamily: 'Outfit',
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
+                      letterSpacing: 3,
                       color: state == VoiceState.listening
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                          ? MaxTheme.accent
+                          : MaxTheme.secondary,
                     ),
                   )
                 ],

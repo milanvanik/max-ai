@@ -155,6 +155,41 @@ class GroqService {
     }
   }
 
+  /// Sends a one-off prompt without affecting the internal conversation history.
+  Future<dynamic> statelessSendMessage(String text) async {
+    try {
+      final response = await _dio.post(
+        _baseUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${Constants.groqApiKey}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)',
+          },
+        ),
+        data: {
+          'model': Constants.groqModel,
+          'messages': [
+            {'role': 'system', 'content': 'You are a helpful assistant.'},
+            {'role': 'user', 'content': text},
+          ],
+          'temperature': 0.5,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data['choices'][0]['message']['content'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Groq Stateless Exception: $e');
+      return null;
+    }
+  }
+
+
   Future<dynamic> submitToolResults(List<Map<String, dynamic>> results) async {
     for (var res in results) {
       _messages.add({

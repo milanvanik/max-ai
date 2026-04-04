@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/chat_provider.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/voice_mode_bottom_sheet.dart';
+import 'widgets/neural_core.dart';
+import '../utils/theme.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -92,11 +94,26 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: chatProvider.messages.isEmpty
                 ? Center(
-                    child: Text(
-                      "Hi! I'm Max. How can I help you?",
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        MaxNeuralCore(
+                          state: chatProvider.isGenerating ? CoreState.thinking : CoreState.idle,
+                          size: 180,
+                        ),
+                        const SizedBox(height: 32),
+                        Text(
+                          "Ready to explore.",
+                          style: theme.textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "What's on your mind?",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.secondary,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
@@ -260,8 +277,166 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
+              const Divider(),
+            ListTile(
+              leading: const Icon(Icons.psychology_outlined),
+              title: const Text('Your Persona'),
+              subtitle: const Text('What Max remembers about you'),
+              onTap: () {
+                Navigator.pop(context);
+                _showPersonaVault(context, provider);
+              },
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _showClearConfirm(context, provider, true),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                      side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+                      foregroundColor: theme.colorScheme.error,
+                    ),
+                    icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                    label: const Text('Clear All Chats'),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _showClearConfirm(context, provider, false),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 44),
+                      side: BorderSide(color: theme.colorScheme.secondary.withValues(alpha: 0.5)),
+                      foregroundColor: theme.colorScheme.secondary,
+                    ),
+                    icon: const Icon(Icons.memory_outlined, size: 18),
+                    label: const Text('Clear My Memory'),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPersonaVault(BuildContext context, ChatProvider provider) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final currentFacts = provider.memoryService.getFacts();
+          return AlertDialog(
+            backgroundColor: MaxTheme.surface.withValues(alpha: 0.9),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            title: Row(
+              children: [
+                const Icon(Icons.auto_awesome, size: 20),
+                const SizedBox(width: 12),
+                Text('Your Persona', style: theme.textTheme.titleLarge),
+              ],
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "This is the identity Max has built based on your conversations.",
+                      style: theme.textTheme.bodyMedium?.copyWith(color: MaxTheme.secondary),
+                    ),
+                    const SizedBox(height: 16),
+                    if (currentFacts.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 32),
+                        child: Center(
+                          child: Text("No facts remembered yet."),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: currentFacts.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      currentFacts[index],
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 18, color: Colors.redAccent),
+                                    onPressed: () async {
+                                      await provider.deleteFact(index);
+                                      setDialogState(() {});
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Done'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showClearConfirm(BuildContext context, ChatProvider provider, bool isChats) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isChats ? 'Clear All Chats' : 'Clear My Memory'),
+        content: Text(isChats
+            ? 'Are you sure you want to delete EVERY conversation? This cannot be undone.'
+            : 'Are you sure you want to clear everything Max has learned about you? This resets his personalized memory.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              if (isChats) {
+                provider.clearAllChats();
+              } else {
+                provider.clearAllMemory();
+              }
+              Navigator.pop(context);
+              Navigator.pop(context); // Close Drawer
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Clear All'),
+          ),
+        ],
       ),
     );
   }
@@ -315,19 +490,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildInputArea(ThemeData theme, ChatProvider provider) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, -2),
-            blurRadius: 10,
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Container(
+        width: double.infinity,
+        decoration: MaxTheme.glassDecoration,
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -466,6 +633,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../utils/theme.dart';
 
 class ChatBubble extends StatelessWidget {
   final String text;
@@ -28,83 +30,88 @@ class ChatBubble extends StatelessWidget {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isUser
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.surfaceContainerHighest,
+        child: ClipRRect(
           borderRadius: borderRadius,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (base64Images != null && base64Images!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: base64Images!.map((img) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(
-                        base64Decode(img),
-                        width: base64Images!.length == 1 ? double.infinity : 100,
-                        height: base64Images!.length == 1 ? null : 100,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  }).toList(),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: MaxTheme.glassDecoration.copyWith(
+                borderRadius: borderRadius,
+                color: isUser 
+                    ? MaxTheme.accent.withValues(alpha: 0.1) 
+                    : MaxTheme.surface.withValues(alpha: 0.4),
+                border: Border.all(
+                  color: isUser ? MaxTheme.accent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05),
+                  width: 1,
                 ),
               ),
-            SelectableText(
-              text,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: isUser
-                    ? theme.colorScheme.onPrimaryContainer
-                    : theme.colorScheme.onSurfaceVariant,
-                height: 1.4,
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
               ),
-            ),
-            if (!isUser) ...[
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerRight,
-                child: InkWell(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied to clipboard'),
-                        duration: Duration(seconds: 1),
-                        behavior: SnackBarBehavior.floating,
-                        width: 200,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (base64Images != null && base64Images!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: base64Images!.map((img) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              base64Decode(img),
+                              width: base64Images!.length == 1 ? double.infinity : 100,
+                              height: base64Images!.length == 1 ? null : 100,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        }).toList(),
                       ),
-                    );
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: Icon(
-                      Icons.copy_rounded,
-                      size: 16,
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    ),
+                  SelectableText(
+                    text,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: isUser
+                          ? MaxTheme.accent
+                          : MaxTheme.primary,
+                      height: 1.4,
                     ),
                   ),
-                ),
+                  if (!isUser) ...[
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: text));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Copied to clipboard'),
+                              duration: Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              width: 200,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );

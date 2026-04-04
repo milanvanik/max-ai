@@ -81,6 +81,7 @@ class ChatProvider extends ChangeNotifier {
   String get currentPhrase => _currentPhrase;
   List<String> get pickedImages => _pickedImages;
   VoiceService get voiceService => _voiceService;
+  MemoryService get memoryService => _memoryService;
 
   ChatProvider() {
     _loadThreads();
@@ -96,20 +97,24 @@ class ChatProvider extends ChangeNotifier {
   }
 
   void _initializeServices({bool isVoiceMode = false}) {
-    final String basePersonality = Constants.maxPersonality;
+    final String persona = Constants.maxPersona;
+    final String discipline = Constants.maxDiscipline;
     final List<String> facts = _memoryService.getFacts();
 
-    String finalSystemPrompt = basePersonality;
+    // The Sandwich construction
+    String finalSystemPrompt = persona;
+
+    if (facts.isNotEmpty) {
+      final String formattedFacts = facts.map((f) => "- $f").join("\n");
+      finalSystemPrompt += "\n### USER IDENTITY & PREFERENCES:\n$formattedFacts\n";
+    }
+
+    // Discipline goes LAST to be the strongest rule
+    finalSystemPrompt += "\n$discipline";
 
     if (isVoiceMode) {
       finalSystemPrompt +=
           "\n\nCRITICAL VOICE MODE RULE: You are in a voice conversation. Respond naturally and helpfully (2-3 sentences). If you need to use a tool to get information, do so immediately, then provide the final helpful answer briefly. Own your AI-swagger while being concise.";
-    }
-
-    if (facts.isNotEmpty) {
-      final String formattedFacts = facts.map((f) => "- $f").join("\n");
-      finalSystemPrompt +=
-          "\n\nCRITICAL USER FACTS TO REMEMBER:\n$formattedFacts";
     }
 
     final List<Map<String, dynamic>> groqHistory = messages.map((msg) {
@@ -201,7 +206,7 @@ class ChatProvider extends ChangeNotifier {
     _threads.add(newThread);
     _currentThreadId = newId;
     _chatBox.put('last_thread_id', newId);
-    _initializeServices();
+    _initializeServices(); // Fresh start!
     _saveThreads();
     notifyListeners();
   }
@@ -212,7 +217,7 @@ class ChatProvider extends ChangeNotifier {
     if (_currentThreadId == id) return;
     _currentThreadId = id;
     _chatBox.put('last_thread_id', id);
-    _initializeServices();
+    _initializeServices(); // Pull messages from the thread into services
     notifyListeners();
   }
 
@@ -239,6 +244,30 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> clearAllMemory() async {
+    await _memoryService.clearAllFacts();
+    _initializeServices(); // Important: Wipe facts from the prompt!
+    notifyListeners();
+  }
+
+  Future<void> deleteFact(int index) async {
+    final List<String> currentFacts = _memoryService.getFacts();
+    if (index >= 0 && index < currentFacts.length) {
+      currentFacts.removeAt(index);
+      await _memoryService.saveFullFactList(currentFacts);
+      _initializeServices();
+      notifyListeners();
+    }
+  }
+
+  void clearAllChats() async {
+    _threads = [];
+    _currentThreadId = null;
+    await _chatBox.delete('threads');
+    _createNewThread(); // This calls _initializeServices(facts, empty_history)
+    notifyListeners();
+  }
+
   Future<void> _generateTitle(String firstPrompt) async {
     final threadId = _currentThreadId;
     if (threadId == null) return;
@@ -246,9 +275,9 @@ class ChatProvider extends ChangeNotifier {
     final prompt =
         "Generate a very short (2-3 words) title for a chat that starts with this message: \"$firstPrompt\". Return ONLY the title text, nothing else.";
 
-    final title = await _groqService.sendMessage(prompt);
+    final title = await _groqService.statelessSendMessage(prompt);
 
-    if (title != null && title.isNotEmpty && !title.contains("⚠️")) {
+    if (title != null && title is String && title.isNotEmpty && !title.contains("⚠️")) {
       final cleanTitle = title.replaceAll('"', '').replaceAll("'", "").trim();
       renameThread(threadId, cleanTitle);
     }
@@ -321,7 +350,9 @@ class ChatProvider extends ChangeNotifier {
 
     String finalResultText = "";
     if (aiResponse is String) {
-      finalResultText = aiResponse;
+      finalResultText = _stripHallucinatedTags(aiResponse);
+    } else if (aiResponse is GenerateContentResponse) {
+      finalResultText = _stripHallucinatedTags(aiResponse.text ?? "⚠️ Max went silent.");
     } else {
       finalResultText = "⚠️ Max encountered an error processing tools.";
     }
@@ -348,11 +379,18 @@ class ChatProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    FactExtractor.extractFacts(text).then((newFacts) async {
+    // Build a conversation window for context-aware fact extraction.
+    // We pass the last 10 messages (including the just-added user + AI pair)
+    // so the extractor can connect dots across multi-turn exchanges.
+    final List<Map<String, String>> extractionWindow = messages
+        .skip((messages.length - 10).clamp(0, messages.length))
+        .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
+        .toList();
+
+    FactExtractor.extractFacts(extractionWindow).then((newFacts) async {
       if (newFacts.isNotEmpty) {
         await _memoryService.saveFacts(newFacts);
-        _initializeServices(
-        );
+        _initializeServices();
       }
     });
   }
@@ -411,6 +449,19 @@ class ChatProvider extends ChangeNotifier {
       _voiceService.stop();
     }
     notifyListeners();
+  }
+
+  String _stripHallucinatedTags(String text) {
+    String cleanText = text;
+    // Pattern A: <function=name{...}>
+    cleanText = cleanText.replaceAll(RegExp(r'<function=([\w_]+)\{([^}]*)\}>', caseSensitive: false), '');
+    // Pattern B: <function.name.param>value</function>
+    cleanText = cleanText.replaceAll(RegExp(r'<[\/]?function\.([\w_]+)\.([\w_]+)>([^<]+)<\/function>', caseSensitive: false), '');
+    // Pattern C: <function(name.param="value")></function>
+    cleanText = cleanText.replaceAll(RegExp(r'<function\(([\w_]+)\.([\w_]+)=([^)]+)\)>', caseSensitive: false), '');
+    
+    // Clean up empty lines or excessive whitespace left behind
+    return cleanText.trim();
   }
 
   /// Processes tool calls from either Groq or Gemini in a loop until a final answer is reached

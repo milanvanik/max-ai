@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'providers/chat_provider.dart';
+import 'utils/theme.dart';
 import 'ui/chat_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,13 +33,7 @@ class MaxApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Max',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
+        theme: MaxTheme.themeData,
         home: const ChatScreen(),
       ),
     );
